@@ -1,0 +1,108 @@
+/*****View #2 Both Active and Non-Active (Withdrawn) Patients******/
+CREATE VIEW All_Patients_1 AS
+select p.PatientID, p.PatientNumber, p.SiteID, st.StudyID, st.StudyDesc
+from TPatients p, TSites s, TStudies st
+where p.SiteID = s.SiteID
+and s.StudyID = st.StudyID
+GO
+
+/*****View #2 Active Patients ONLY******/
+CREATE VIEW All_Patients_2 AS
+select All_Patients.PatientID
+, All_Patients.PatientNumber
+, All_Patients.SiteID
+, All_Patients.StudyID
+, All_Patients.StudyDesc
+from 
+(select p.PatientID, p.PatientNumber, p.SiteID, st.StudyID, st.StudyDesc
+from TPatients p, TSites s, TStudies st
+where p.SiteID = s.SiteID
+and s.StudyID = st.StudyID) as All_Patients
+left join (select v.patientID, v.WithdrawReasonID
+from TVisits v 
+where VisitTypeID = 3) as WithDrawn_Patients
+on All_Patients.PatientID = Withdrawn_Patients.PatientID
+where Withdrawn_Patients.PatientID is null 
+GO
+
+/*****View #3 Both Active and Non-Active (Withdrawn) Patients******/
+CREATE VIEW Randomized_Patients_1 AS
+select p.PatientID, p.PatientNumber, p.SiteID, rc.Treatment, st.StudyID, st.StudyDesc
+from TPatients p, TRandomCodes rc, TSites s, TStudies st
+where p.RandomCodeID is not null 
+and p.RandomCodeID = rc.RandomCodeID
+and p.siteID = s.SiteID
+and s.StudyID = st.StudyID
+GO
+
+/*****View #3 Active Patients ONLY******/
+CREATE VIEW Randomized_Patients_2 AS
+select All_Patients.PatientID
+, All_Patients.PatientNumber
+, All_Patients.SiteID
+, All_Patients.StudyID
+, All_Patients.StudyDesc
+,All_Patients.Treatment
+from 
+(select p.PatientID, p.PatientNumber, p.SiteID, rc.Treatment, st.StudyID, st.StudyDesc
+from TPatients p, TRandomCodes rc, TSites s, TStudies st
+where p.RandomCodeID is not null 
+and p.RandomCodeID = rc.RandomCodeID
+and p.siteID = s.SiteID
+and s.StudyID = st.StudyID) as All_Patients
+left join (select v.patientID, v.WithdrawReasonID
+from TVisits v 
+where VisitTypeID = 3) as WithDrawn_Patients
+on All_Patients.PatientID = Withdrawn_Patients.PatientID
+where Withdrawn_Patients.PatientID is null 
+GO
+
+/*****View #4 Study 1******/
+CREATE VIEW Next_Avail_RandomCode_Study1 AS
+select min(randomcodeid) as 'Next Available RandomCodeID', min(randomcode) as 'Next Available RandomCode'
+from TRandomCodes
+where StudyID = 1
+and Available <> 'F'
+GO
+
+/*****View #4 Study 2******/
+CREATE VIEW Next_Avail_RandomCode_Study2 AS
+select min(randomcodeid) as 'Next Available RandomCodeID', min(randomcode) as 'Next Available RandomCode', Treatment
+from TRandomCodes
+where StudyID = 2
+and Available <> 'F'
+group by Treatment
+GO
+
+
+/*****View #5******/
+CREATE VIEW Available_Drugkits_5 AS
+select d.drugkitID, d.DrugKitNumber, d.Treatment, st.SiteID, s.studyID
+from TSites st, TStudies s, TDrugKits d
+where st.StudyID = s.StudyID
+and d.SiteID = st.SiteID
+and d.VisitID is null 
+GO
+
+/*****View #6******/
+CREATE VIEW Withdrawn_Patients_6 AS
+select st.StudyDesc
+, p.PatientID
+, p.PatientNumber
+, CONVERT(DATE, v.Visit) as 'Withdrawal Date'
+, s.SiteID
+, wr.WithdrawDesc
+from TPatients p, TVisits v, TWithdrawReasons wr,  TSites s, TStudies st
+where v.PatientID = p.PatientID
+and v.WithdrawReasonID = wr.WithdrawReasonID
+and p.SiteID = s.SiteID
+and s.StudyID = st.StudyID
+GO
+
+/*****View #7******/
+CREATE VIEW DrugKit_Supply_7 AS
+select dk.DrugKitNumber, dk.SiteID, st.StudyID
+from TDrugKits dk, TSites s, TStudies st
+where dk.VisitID is null 
+and s.StudyID = st.StudyID
+GO

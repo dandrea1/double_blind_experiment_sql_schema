@@ -1,0 +1,425 @@
+/******************************************Screening SP***************************************************************/
+CREATE PROCEDURE [dbo].[Screening](
+	/*Declare Input Parameters */
+	@PatientNumber as int,
+	@SiteNumber as int,
+	@DOB as datetime,
+	@GenderID as int,
+	@Weight as int,
+	@VisitDate as datetime
+) AS
+
+BEGIN 
+
+	/*Bad Data Checks*/
+	IF @SiteNumber NOT IN (101,111,121,501,511,521)
+		 RAISERROR(N'Site Does Not Exist',16,1)
+	IF @GenderID NOT IN (1, 2)
+		 RAISERROR(N'Gender Does Not Exist',16,1)
+
+IF Exists (select * from TVisits 
+			where PatientID = (select PatientID from TPatients where PatientNumber = concat(@SiteNumber,@PatientNumber)
+			and VisitTypeID =1))
+	BEGIN
+		PRINT('N Record already exists')
+	END
+ELSE
+	BEGIN
+	/*Insert Record into TPatients*/
+	INSERT INTO [dbo].[TPatients]
+			   ([PatientNumber]
+			   ,[SiteID]
+			   ,[DOB]
+			   ,[GenderID]
+			   ,[Weight]
+			   ,[RandomCodeID]
+				)
+		 VALUES
+			   (concat(@SiteNumber,@PatientNumber)/*Where SiteNumber is first 3 digits and Patient Number is last 3 digits*/
+			   ,(select SiteID from TSites where SiteNumber = @SiteNumber)
+				,@DOB
+			   ,@GenderID
+			   ,@Weight
+			   ,NULL)
+
+	/*Insert Record into TVisits */
+	INSERT INTO [dbo].[TVisits]
+			   ([PatientID]
+			   ,[Visit]
+			   ,[VisitTypeID]
+			   ,[WithdrawReasonID]
+				)
+		 VALUES
+			   ((select patientID from TPatients where patientNumber = concat(@SiteNumber,@PatientNumber))
+			   /*Find existing patient ID in TPatients and associate it with this screening visit*/
+			   ,@VisitDate
+				,1
+			   ,NULL)
+
+	END
+END
+GO
+
+/******************************************Withdrawal SP***************************************************************/
+CREATE PROCEDURE [dbo].[Withdrawal](
+	/*Declare Input Parameters */
+	@PatientNumber as int,
+	@SiteNumber as int,
+	@VisitDate as datetime,
+	@WithdrawReasonID as int
+) AS
+BEGIN 
+
+/*Bad Data Checks*/
+IF @SiteNumber NOT IN (101,111,121,501,511,521)
+     RAISERROR(N'Site Does Not Exist',16,1)
+
+/*Declare Variables*/
+DECLARE @CurrentPatient int;
+DECLARE @CurrentPatientID int;
+DECLARE @FetchedRandomCodeResult int;
+DECLARE @LastVisit datetime; 
+SET @CurrentPatient = concat(@SiteNumber,@PatientNumber);
+SET @CurrentPatientID = (select patientID from TPatients where PatientNumber = @CurrentPatient)
+
+/*Check Date is after last visit date*/
+SET @LastVisit = (select MAX(VISIT) from TVisits where PatientID = @CurrentPatientID)
+IF @VisitDate > @LastVisit
+	BEGIN
+/*Check to see if patient has been randomized*/
+SET @FetchedRandomCodeResult = (select RandomCodeID from TPatients where PatientNumber = @CurrentPatient)
+
+/*Execute for non-randomized patient*/
+	IF @FetchedRandomCodeResult is null 
+		BEGIN
+			/*Insert Record into TVisits */
+			INSERT INTO [dbo].[TVisits]
+           ([PatientID]
+		   ,[Visit]
+           ,[VisitTypeID]
+           ,[WithdrawReasonID]
+			)
+			VALUES
+           (@CurrentPatientID
+           ,@VisitDate
+            ,3
+		   ,@WithdrawReasonID)
+		END
+/*Execute for randomized patient*/
+	ELSE
+		BEGIN
+		/*Insert Record into TVisits */
+			INSERT INTO [dbo].[TVisits]
+           ([PatientID]
+		   ,[Visit]
+           ,[VisitTypeID]
+           ,[WithdrawReasonID]
+			)
+			VALUES
+           (@CurrentPatientID
+           ,@VisitDate
+            ,3
+		   ,@WithdrawReasonID)
+		END
+
+	END
+ELSE
+	BEGIN
+	 PRINT N'The date needs to be after last visit date'
+	END
+END
+GO
+
+/******************************************Randomization SP***************************************************************/
+
+
+CREATE PROCEDURE [dbo].[Randomization](
+	/*Declare Input Parameters */
+	 @SiteNumber as int,
+	 @PatientNumber as int,
+	 @VisitDate as datetime
+) AS
+BEGIN
+	/*Declare Variables */
+	/*Study 2 Variables*/
+	DECLARE @ActiveTreatmentCount int;
+	DECLARE @PlaceboTreatmentCount int;
+	DECLARE @NextAvailablePlaceboCode int;
+	DECLARE @NextAvailablePlaceboCodeID int;
+	DECLARE @NextAvailableActiveCode int;
+	DECLARE @NextAvailableActiveCodeID int;
+	DECLARE @DistributedPlaceboDrugKitID int;
+	DECLARE @DistributedActiveDrugKitID int;
+	/*Shared Variables*/
+	DECLARE @DerivedVisitID int;
+	/*Study 1 Variables */
+	DECLARE @Study1NextAvailableCode int; 
+	DECLARE @Study1NextAvailableID int; 
+	DECLARE @Study1TreatmentType nvarchar(1);
+	DECLARE @Study1DrugKitID int;
+
+	/*Get next randomcode for study 12345*/
+	SET @Study1NextAvailableCode = (select [Next Available RandomCode] from Next_Avail_RandomCode_Study1)
+	SET @Study1NextAvailableID = (select [Next Available RandomCodeID] from Next_Avail_RandomCode_Study1)
+	SET @Study1TreatmentType = (select Treatment from TRandomCodes where RandomCodeID = @Study1NextAvailableID)
+
+	CREATE table #Study1DrugKitPlacebo (
+		DrugKitID int,
+		test varchar(50)
+			);
+
+		INSERT INTO #Study1DrugKitPlacebo select DrugKitID,
+			CASE 
+				WHEN VisitID is null  Then 'this is null'
+				WHEN VisitID is not null then 'this is not null'
+			End as test
+			from TDrugKits
+			where SiteID = (select SiteID from TSites where SiteNumber = @SiteNumber)
+			and Treatment = 'P'
+
+	CREATE table #Study1DrugKitActive (
+		DrugKitID int,
+		test varchar(50)
+			);
+
+		INSERT INTO #Study1DrugKitActive select DrugKitID,
+			CASE 
+				WHEN VisitID is null  Then 'this is null'
+				WHEN VisitID is not null then 'this is not null'
+			End as test
+			from TDrugKits
+			where SiteID = (select SiteID from TSites where SiteNumber = @SiteNumber)
+			and Treatment = 'A'
+
+
+	/*Get counts of active & placebo treaments for study 54321*/
+		SET @ActiveTreatmentCount = (Select count(treatment) as NumberofActiveTreatmentsInUse from TRandomCodes
+		where StudyID = 2
+		and Available = 'F'
+		and Treatment = 'A')
+		SET @PlaceboTreatmentCount = (Select count(treatment) as NumberofPlaceboTreatmentsInUse from TRandomCodes
+		where StudyID = 2
+		and Available = 'F'
+		and Treatment = 'P')
+
+	/*Next Available Placebo Treatment*/
+		SET @NextAvailablePlaceboCode = (select [Next Available RandomCode]
+		from Next_Avail_RandomCode_Study2 where treatment = 'P')
+
+		SET @NextAvailablePlaceboCodeID = (select [Next Available RandomCodeID] 
+		from Next_Avail_RandomCode_Study2 where treatment = 'P')
+
+	/*Next Available Active Treatment*/
+		SET @NextAvailableActiveCode = (select [Next Available RandomCode]
+		from Next_Avail_RandomCode_Study2 where treatment = 'A')
+
+		SET @NextAvailableActiveCodeID = (select [Next Available RandomCodeID] 
+			from Next_Avail_RandomCode_Study2 where treatment = 'A')
+
+	/*Next Available Placebo Drug Kit from current site*/
+		CREATE table #drugkitplacebo (
+		DrugKitID int,
+		test varchar(50)
+			);
+
+		INSERT INTO #drugkitplacebo select DrugKitID,
+			CASE 
+				WHEN VisitID is null  Then 'this is null'
+				WHEN VisitID is not null then 'this is not null'
+			End as test
+			from TDrugKits
+			where SiteID = (select SiteID from TSites where SiteNumber = @SiteNumber)
+			and Treatment = 'P'
+
+		SET @DistributedPlaceboDrugKitID = (select min(DrugKitID) from #drugkitplacebo 
+		where test = 'this is null')
+
+	/*Next Available Active Drug Kit from current site*/
+		CREATE table #drugkitactive (
+		DrugKitID int,
+		test varchar(50)
+			);
+		
+		INSERT INTO #drugkitactive select DrugKitID,
+			CASE 
+				WHEN VisitID is null  Then 'this is null'
+				WHEN VisitID is not null then 'this is not null'
+			End as test
+			from TDrugKits
+			where SiteID = (select SiteID from TSites where SiteNumber = @SiteNumber)
+			and Treatment = 'A'
+
+		SET @DistributedActiveDrugKitID = (select min(DrugKitID) from #drugkitactive 
+		where test = 'this is null')
+
+/*Get derived Visit ID from visitDate*/
+	SET @DerivedVisitID = (select visitid from TVisits where VisitTypeID = 2
+			and PatientID = (select patientID from TPatients where PatientNumber = concat(@SiteNumber,@PatientNumber))
+			and visit = @VisitDate)	
+
+
+	/*Begin Logic To Insert/Update Tables*/
+	IF @SiteNumber in (101,111,121)
+		BEGIN
+			/*Insert TVisits*/
+			INSERT INTO [dbo].[TVisits]
+					 ([PatientID]
+					 ,[Visit]
+					 ,[VisitTypeID]
+					 ,[WithdrawReasonID]
+					)
+					VALUES
+						 ((select patientID from TPatients where PatientNumber = concat(@SiteNumber,@PatientNumber))
+						 ,@VisitDate
+						 ,2
+						 ,NULL)
+			/*Update TPatients*/
+			Update [dbo].[TPatients]
+					SET RandomCodeID = @Study1NextAvailableID
+					WHERE PatientNumber = concat(@SiteNumber,@PatientNumber)
+			/*Update TRandomCodes*/
+			Update [dbo].[TRandomCodes]
+					SET Available = 'F'
+					WHERE RandomCodeID = @Study1NextAvailableID
+			/*Update TDrugkits*/
+				IF @Study1TreatmentType = 'A'
+					BEGIN
+						SET @Study1DrugKitID = (select min(DrugKitID) from #Study1DrugKitActive)
+						Update [dbo].[TDrugKits]
+						SET VisitID = @DerivedVisitID
+						WHERE DrugKitID = @Study1DrugKitID
+					END
+				ELSE
+					BEGIN
+						SET @Study1DrugKitID = (select min(DrugKitID) from #Study1DrugKitPlacebo)
+						Update [dbo].[TDrugKits]
+						SET VisitID = @DerivedVisitID
+						WHERE DrugKitID = @Study1DrugKitID
+					END
+		END
+	ELSE
+		BEGIN
+			IF @ActiveTreatmentCount = @PlaceboTreatmentCount + 2
+				BEGIN
+					INSERT INTO [dbo].[TVisits]
+					 ([PatientID]
+					 ,[Visit]
+					 ,[VisitTypeID]
+					 ,[WithdrawReasonID]
+					)
+					VALUES
+						 ((select patientID from TPatients where PatientNumber = concat(@SiteNumber,@PatientNumber))
+						 ,@VisitDate
+						 ,2
+						 ,NULL)
+					/*Update Record in TPatients*/
+					Update [dbo].[TPatients]
+					SET RandomCodeID = @NextAvailablePlaceboCodeID
+					WHERE PatientNumber = concat(@SiteNumber,@PatientNumber)
+					/*Update Record in TRandomCodes*/
+					Update [dbo].[TRandomCodes]
+					SET Available = 'F'
+					WHERE RandomCodeID = @NextAvailablePlaceboCodeID
+					/*Update Record in TDrugKits*/
+					Update [dbo].[TDrugKits]
+					SET VisitID = @DerivedVisitID
+					WHERE DrugKitID = @DistributedPlaceboDrugKitID
+				END
+			ELSE IF @PlaceboTreatmentCount = @ActiveTreatmentCount + 2
+				BEGIN
+					INSERT INTO [dbo].[TVisits]
+					 ([PatientID]
+					 ,[Visit]
+					 ,[VisitTypeID]
+					 ,[WithdrawReasonID]
+					)
+					VALUES
+						 ((select patientID from TPatients where PatientNumber = concat(@SiteNumber,@PatientNumber))
+						 ,@VisitDate
+						 ,2
+						 ,NULL)
+				 /*Update Record in TPatients*/
+					Update [dbo].[TPatients]
+					SET RandomCodeID = @NextAvailableActiveCodeID
+					WHERE PatientNumber = concat(@SiteNumber,@PatientNumber)
+				/*Update Record in TRandomCodes*/
+					Update [dbo].[TRandomCodes]
+					SET Available = 'F'
+					WHERE RandomCodeID = @NextAvailableActiveCodeID
+				/*Update Record in TDrugKits*/
+					Update [dbo].[TDrugKits]
+					SET VisitID = @DerivedVisitID
+					WHERE DrugKitID = @DistributedActiveDrugKitID
+				END
+			ELSE
+				BEGIN
+					/*Create Random Variable*/
+					DECLARE @RandomVariable int;
+					SET @RandomVariable = Round(Rand(),0)
+					IF @RandomVariable = 0 /*If zero, assign Placebo*/
+						BEGIN
+							/*Insert Randomization Record Into Vists*/
+							INSERT INTO [dbo].[TVisits]
+							 ([PatientID]
+							 ,[Visit]
+							 ,[VisitTypeID]
+							 ,[WithdrawReasonID]
+							)
+							VALUES
+							 ((select patientID from TPatients where PatientNumber = concat(@SiteNumber,@PatientNumber))
+							 ,@VisitDate
+							 ,2
+							 ,NULL)
+							/*Update Record in TPatients*/
+							Update [dbo].[TPatients]
+							SET RandomCodeID = @NextAvailablePlaceboCodeID
+							WHERE PatientNumber = concat(@SiteNumber,@PatientNumber)
+							/*Update Record in TRandomCodes*/
+							Update [dbo].[TRandomCodes]
+							SET Available = 'F'
+							WHERE RandomCodeID = @NextAvailablePlaceboCodeID
+							/*Update Record in TDrugKits*/
+							Update [dbo].[TDrugKits]
+							SET VisitID = @DerivedVisitID
+							WHERE DrugKitID = @DistributedPlaceboDrugKitID
+						END
+					ELSE /*If 1, assign Active*/
+						BEGIN
+							/*Insert Randomization Record Into Vists*/
+							INSERT INTO [dbo].[TVisits]
+							 ([PatientID]
+							 ,[Visit]
+							 ,[VisitTypeID]
+							 ,[WithdrawReasonID]
+							)
+							VALUES
+								 ((select patientID from TPatients where PatientNumber = concat(@SiteNumber,@PatientNumber))
+								 ,@VisitDate
+								 ,2
+								 ,NULL)
+							 /*Update Record in TPatients*/
+								Update [dbo].[TPatients]
+								SET RandomCodeID = @NextAvailableActiveCodeID
+								WHERE PatientNumber = concat(@SiteNumber,@PatientNumber)
+							/*Update Record in TRandomCodes*/
+								Update [dbo].[TRandomCodes]
+								SET Available = 'F'
+								WHERE RandomCodeID = @NextAvailableActiveCodeID
+							/*Update Record in TDrugKits*/
+								Update [dbo].[TDrugKits]
+								SET VisitID = @DerivedVisitID
+								WHERE DrugKitID = @DistributedActiveDrugKitID
+						END
+				END
+		END
+	drop table #drugkitplacebo
+	drop table #drugkitactive
+	drop table #Study1DrugKitPlacebo
+	drop table #Study1DrugKitActive
+END
+
+
+
+
+
+

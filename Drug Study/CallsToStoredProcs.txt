@@ -1,0 +1,192 @@
+USE [Drug Study]
+GO
+
+/* Insert 4 Patients into Study 1, Site 101*/
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 101,@SiteNumber = 101,@DOB = '1/1/1981',@GenderID = 1,@Weight= 130,@VisitDate = '7/1/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 102,@SiteNumber = 101,@DOB = '2/2/1982',@GenderID = 2,@Weight= 130,@VisitDate = '7/1/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 103,@SiteNumber = 101,@DOB = '3/3/1983',@GenderID = 1,@Weight= 130,@VisitDate = '7/1/2020'
+GO
+
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 104,@SiteNumber = 101,@DOB = '4/4/1984',@GenderID = 2,@Weight= 130,@VisitDate = '7/1/2020'
+GO
+
+/* Insert 4 Patients into Study 1, Site 111*/
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 101,@SiteNumber = 111,@DOB = '5/5/1985',@GenderID = 1,@Weight= 140,@VisitDate = '7/2/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 102,@SiteNumber = 111,@DOB = '6/6/1986',@GenderID = 2,@Weight= 160,@VisitDate = '7/2/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 103,@SiteNumber = 111,@DOB = '7/7/1987',@GenderID = 1,@Weight= 150,@VisitDate = '7/3/2020'
+GO
+
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 104,@SiteNumber = 111,@DOB = '8/8/1988',@GenderID = 2,@Weight= 140,@VisitDate = '7/4/2020'
+GO
+
+
+/* Insert 4 Patients into Study 1, Site 501*/
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 101,@SiteNumber = 501,@DOB = '9/9/1989',@GenderID = 1,@Weight= 130,@VisitDate = '7/3/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 102,@SiteNumber = 501,@DOB = '10/10/1981',@GenderID = 2,@Weight= 130,@VisitDate = '7/3/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 103,@SiteNumber = 501,@DOB = '11/11/1982',@GenderID = 1,@Weight= 130,@VisitDate = '7/3/2020'
+GO
+
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 104,@SiteNumber = 501,@DOB = '12/12/1983',@GenderID = 2,@Weight= 130,@VisitDate = '7/3/2020'
+GO
+
+
+/* Insert 4 Patients into Study 1, Site 501*/
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 101,@SiteNumber = 511,@DOB = '11/11/1984',@GenderID = 1,@Weight= 140,@VisitDate = '7/4/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 102,@SiteNumber = 511,@DOB = '12/12/1985',@GenderID = 2,@Weight= 160,@VisitDate = '7/4/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 103,@SiteNumber = 511,@DOB = '1/13/1986',@GenderID = 1,@Weight= 150,@VisitDate = '7/1/2020'
+GO
+
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Screening] 
+   @PatientNumber = 104,@SiteNumber = 511,@DOB = '2/14/1987',@GenderID = 2,@Weight= 140,@VisitDate = '7/1/2020'
+GO
+
+/* Randomize 5 Patients for Study 1*/
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Randomization_Study1] 
+@SiteNumber = 101,@PatientNumber = 101, @VisitDate = '7/20/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Randomization_Study1] 
+@SiteNumber = 101,@PatientNumber = 102, @VisitDate = '7/20/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Randomization_Study1] 
+@SiteNumber = 101,@PatientNumber = 103, @VisitDate = '7/20/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Randomization_Study1] 
+@SiteNumber = 101,@PatientNumber = 104, @VisitDate = '7/20/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Randomization_Study1] 
+@SiteNumber = 111,@PatientNumber = 101, @VisitDate = '7/20/2020'
+GO
+
+/* Randomize 5 Patients for Study 2*/
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Randomization_Study2] 
+   @SiteNumber = 501,@PatientNumber = 101,@VisitDate = '7/20/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Randomization_Study2] 
+   @SiteNumber = 501,@PatientNumber = 102,@VisitDate = '7/20/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Randomization_Study2] 
+   @SiteNumber = 501,@PatientNumber = 103,@VisitDate = '7/20/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Randomization_Study2] 
+   @SiteNumber = 501,@PatientNumber = 104,@VisitDate = '7/20/2020'
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Randomization_Study2] 
+   @SiteNumber = 511,@PatientNumber = 101,@VisitDate = '7/20/2020'
+GO
+
+/* Withdraw Patients from Study 1*/
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Withdrawal] 
+   @PatientNumber = 101,@SiteNumber = 101 ,@VisitDate = '7/23/2020',@WithdrawReasonID =1
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Withdrawal] 
+   @PatientNumber = 102,@SiteNumber = 101 ,@VisitDate = '7/23/2020',@WithdrawReasonID =2
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Withdrawal] 
+   @PatientNumber = 102,@SiteNumber = 111 ,@VisitDate = '7/23/2020',@WithdrawReasonID =5
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Withdrawal] 
+   @PatientNumber = 103,@SiteNumber = 111 ,@VisitDate = '7/23/2020',@WithdrawReasonID =4
+GO
+
+/* Withdraw Patients from Study 2*/
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Withdrawal] 
+   @PatientNumber = 101,@SiteNumber = 501 ,@VisitDate = '7/23/2020',@WithdrawReasonID =2
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Withdrawal] 
+   @PatientNumber = 102,@SiteNumber = 501 ,@VisitDate = '7/23/2020',@WithdrawReasonID =5
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Withdrawal] 
+   @PatientNumber = 102,@SiteNumber = 511 ,@VisitDate = '7/23/2020',@WithdrawReasonID =1
+GO
+
+DECLARE @RC int
+EXECUTE @RC = [dbo].[Withdrawal] 
+   @PatientNumber = 103,@SiteNumber = 511 ,@VisitDate = '7/23/2020',@WithdrawReasonID =1
+GO
+
+

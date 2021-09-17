@@ -1,0 +1,668 @@
+/*** Connect to DB ****/
+USE [Drug Study]
+GO
+
+/*** DROP Stored Procs ****/
+if object_id('Screening','p') is not null
+drop procedure Screening;
+
+if object_id('Randomization_Study1','p') is not null
+drop procedure Randomization_Study1;
+
+if object_id('Randomization_Study2','p') is not null
+drop procedure Randomization_Study2;
+
+if object_id('Withdrawal','p') is not null
+drop procedure Withdrawal;
+
+/*** DROP Views ****/
+if object_id('All_Patients_1','v') is not null
+drop view All_Patients_1;
+
+if object_id('All_Patients_2','v') is not null
+drop view All_Patients_2;
+
+if object_id('Randomized_Patients_1','v') is not null
+drop view Randomized_Patients_1;
+
+if object_id('Randomized_Patients_2','v') is not null
+drop view Randomized_Patients_2;
+
+if object_id('Next_Avail_RandomCode_Study1','v') is not null
+drop view Next_Avail_RandomCode_Study1;
+
+if object_id('Next_Avail_RandomCode_Study2','v') is not null
+drop view Next_Avail_RandomCode_Study2;
+
+if object_id('Available_Drugkits_5','v') is not null
+drop view Available_Drugkits_5;
+
+if object_id('Withdrawn_Patients_6','v') is not null
+drop view Withdrawn_Patients_6;
+
+if object_id('DrugKit_Supply_7','v') is not null
+drop view DrugKit_Supply_7;
+
+
+/****Drop FK_TDrugKits_TVisits, FK_TDrugKits_TSites ******/
+IF (OBJECT_ID('dbo.FK_TDrugKits_TVisits', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TDrugKits', @level2type=N'CONSTRAINT',@level2name=N'FK_TDrugKits_TVisits'
+	ALTER TABLE [dbo].[TDrugKits] DROP CONSTRAINT [FK_TDrugKits_TVisits]
+END
+
+
+IF (OBJECT_ID('dbo.FK_TDrugKits_TSites', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TDrugKits', @level2type=N'CONSTRAINT',@level2name=N'FK_TDrugKits_TSites'
+	ALTER TABLE [dbo].[TDrugKits] DROP CONSTRAINT [FK_TDrugKits_TSites]
+END
+
+/****Drop FK_TVisits_TWithdrawReasons, FK_TVisits_TVisitTypes, FK_TVisits_TPatients ****/
+IF (OBJECT_ID('dbo.FK_TVisits_TWithdrawReasons', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TVisits', @level2type=N'CONSTRAINT',@level2name=N'FK_TVisits_TWithdrawReasons'
+	ALTER TABLE [dbo].[TVisits] DROP CONSTRAINT [FK_TVisits_TWithdrawReasons]
+END
+
+IF (OBJECT_ID('dbo.FK_TVisits_TVisitTypes', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TVisits', @level2type=N'CONSTRAINT',@level2name=N'FK_TVisits_TVisitTypes'
+	ALTER TABLE [dbo].[TVisits] DROP CONSTRAINT [FK_TVisits_TVisitTypes]
+END
+
+IF (OBJECT_ID('dbo.FK_TVisits_TPatients', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TVisits', @level2type=N'CONSTRAINT',@level2name=N'FK_TVisits_TPatients'
+	ALTER TABLE [dbo].[TVisits] DROP CONSTRAINT [FK_TVisits_TPatients]
+END
+
+
+/****Drop FK_TPatients_TSites, FK_TPatients_TRandomCodes, FK_TPatients_TGenders ****/
+IF (OBJECT_ID('dbo.FK_TPatients_TSites', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TPatients', @level2type=N'CONSTRAINT',@level2name=N'FK_TPatients_TSites'
+	ALTER TABLE [dbo].[TPatients] DROP CONSTRAINT [FK_TPatients_TSites]
+END
+
+IF (OBJECT_ID('dbo.FK_TPatients_TRandomCodes', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TPatients', @level2type=N'CONSTRAINT',@level2name=N'FK_TPatients_TRandomCodes'
+	ALTER TABLE [dbo].[TPatients] DROP CONSTRAINT [FK_TPatients_TRandomCodes]
+END
+
+IF (OBJECT_ID('dbo.FK_TPatients_TGenders', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TPatients', @level2type=N'CONSTRAINT',@level2name=N'FK_TPatients_TGenders'
+	ALTER TABLE [dbo].[TPatients] DROP CONSTRAINT [FK_TPatients_TGenders]
+END
+
+
+/****Drop FK_TRandomCodes_TStudies ****/
+IF (OBJECT_ID('dbo.FK_TRandomCodes_TStudies', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TRandomCodes', @level2type=N'CONSTRAINT',@level2name=N'FK_TRandomCodes_TStudies'
+	ALTER TABLE [dbo].[TRandomCodes] DROP CONSTRAINT [FK_TRandomCodes_TStudies]
+END
+
+/****Drop FK_TSites_TStudies ****/
+IF (OBJECT_ID('dbo.FK_TSites_TStudies', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TSites', @level2type=N'CONSTRAINT',@level2name=N'FK_TSites_TStudies'
+	ALTER TABLE [dbo].[TSites] DROP CONSTRAINT [FK_TSites_TStudies]
+END
+
+/****Drop FK_TSites_TStates****/
+IF (OBJECT_ID('dbo.FK_TSites_TStates', 'F') IS NOT NULL)
+BEGIN
+	EXEC sys.sp_dropextendedproperty @name=N'MS_Description' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TSites', @level2type=N'CONSTRAINT',@level2name=N'FK_TSites_TStates'
+	ALTER TABLE [dbo].[TSites] DROP CONSTRAINT [FK_TSites_TStates]
+END
+
+/****Drop Table TDrugKits****/
+IF OBJECT_ID('[dbo].[TDrugKits]', 'U') IS NOT NULL 
+DROP TABLE [dbo].[TDrugKits]
+GO
+
+/****Drop Table TVisits****/
+IF OBJECT_ID('[dbo].[TVisits]', 'U') IS NOT NULL 
+DROP TABLE [dbo].[TVisits]
+GO
+
+/****Drop Table TPatients****/
+IF OBJECT_ID('[dbo].[TPatients]', 'U') IS NOT NULL 
+DROP TABLE [dbo].[TPatients]
+GO
+
+/****Drop Table TRandomCodes ****/
+IF OBJECT_ID('[dbo].[TRandomCodes]', 'U') IS NOT NULL 
+DROP TABLE [dbo].[TRandomCodes]
+GO
+
+
+/****Drop Table TSites****/
+IF OBJECT_ID('[dbo].[TSites]', 'U') IS NOT NULL 
+DROP TABLE [dbo].[TSites]
+GO
+
+/****Drop Table TGenders ****/
+IF OBJECT_ID('[dbo].[TGenders]', 'U') IS NOT NULL 
+	DROP TABLE [dbo].[TGenders]
+GO
+/****Drop Table TStates ****/
+IF OBJECT_ID('[dbo].[TStates]', 'U') IS NOT NULL 
+DROP TABLE [dbo].[TStates]
+GO
+/****Drop Table TStudies****/
+IF OBJECT_ID('[dbo].[TStudies]', 'U') IS NOT NULL 
+DROP TABLE [dbo].[TStudies]
+GO
+/****Drop Table TVisitTypes ****/
+IF OBJECT_ID('[dbo].[TVisitTypes]', 'U') IS NOT NULL 
+DROP TABLE [dbo].[TVisitTypes]
+GO
+/****Drop Table TWithdrawReasons****/
+IF OBJECT_ID('[dbo].[TWithdrawReasons]', 'U') IS NOT NULL 
+DROP TABLE [dbo].[TWithdrawReasons]
+GO
+ 
+
+/****Creaete TGenders Table ****/
+CREATE TABLE [dbo].[TGenders](
+	[GenderID] [int] NOT NULL,
+	[Gender] [nvarchar](10) NOT NULL,
+ CONSTRAINT [PK_TGenders] PRIMARY KEY CLUSTERED 
+(
+	[GenderID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+
+/****Creaete TStates Table ****/
+CREATE TABLE [dbo].[TStates](
+	[StateID] [int] IDENTITY(1,1) NOT NULL,
+	[StateDesc] [nchar](50) NOT NULL,
+ CONSTRAINT [PK_TStates_1] PRIMARY KEY CLUSTERED 
+(
+	[StateID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+/****Create TStudies Table ****/
+CREATE TABLE [dbo].[TStudies](
+	[StudyID] [int] IDENTITY(1,1) NOT NULL,
+	[StudyDesc] [nchar](50) NOT NULL,
+ CONSTRAINT [PK_TStudies] PRIMARY KEY CLUSTERED 
+(
+	[StudyID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+/****Creaete TVisitTypes Table ****/
+CREATE TABLE [dbo].[TVisitTypes](
+	[VisitTypeID] [int] IDENTITY(1,1) NOT NULL,
+	[VisitDesc] [nvarchar](50) NOT NULL,
+ CONSTRAINT [PK_TVisitTypes] PRIMARY KEY CLUSTERED 
+(
+	[VisitTypeID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+/****Creaete TWithdrawReasons Table ****/
+CREATE TABLE [dbo].[TWithdrawReasons](
+	[WithdrawReasonID] [int] IDENTITY(1,1) NOT NULL,
+	[WithdrawDesc] [nvarchar](50) NOT NULL,
+ CONSTRAINT [PK_TWithdrawReasons] PRIMARY KEY CLUSTERED 
+(
+	[WithdrawReasonID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+/****Create TSites Table ****/
+CREATE TABLE [dbo].[TSites](
+	[SiteID] [int] IDENTITY(1,1) NOT NULL,
+	[SiteNumber] [int] NOT NULL,
+	[StudyID] [int] NOT NULL,
+	[Name] [nvarchar](50) NOT NULL,
+	[Address] [nvarchar](100) NOT NULL,
+	[City] [nvarchar](50) NOT NULL,
+	[StateID] [int] NOT NULL,
+	[Zip] [nchar](5) NOT NULL,
+	[Phone] [nchar](10) NOT NULL,
+  CONSTRAINT SiteNumber UNIQUE(SiteNumber),
+ CONSTRAINT [PK_TSites] PRIMARY KEY CLUSTERED 
+(
+	[SiteID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+/****Create TSites FK to TStates, in what state is each site ****/
+ALTER TABLE [dbo].[TSites]  WITH CHECK ADD CONSTRAINT [FK_TSites_TStates] FOREIGN KEY([StateID])
+REFERENCES [dbo].[TStates] ([StateID])
+GO
+
+ALTER TABLE [dbo].[TSites] CHECK CONSTRAINT [FK_TSites_TStates]
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'In what state is the site' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TSites', @level2type=N'CONSTRAINT',@level2name=N'FK_TSites_TStates'
+GO
+
+/****Create TSites FK to TStudies, the site is conducting which study ****/
+ALTER TABLE [dbo].[TSites]  WITH CHECK ADD  CONSTRAINT [FK_TSites_TStudies] FOREIGN KEY([StudyID])
+REFERENCES [dbo].[TStudies] ([StudyID])
+GO
+
+ALTER TABLE [dbo].[TSites] CHECK CONSTRAINT [FK_TSites_TStudies]
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'What study is conducted at the site' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TSites', @level2type=N'CONSTRAINT',@level2name=N'FK_TSites_TStudies'
+GO
+
+
+/****Create TRandomCodes Table ****/
+CREATE TABLE [dbo].[TRandomCodes](
+	[RandomCodeID] [int] IDENTITY(1,1) NOT NULL,
+	[RandomCode] [int] NOT NULL,
+	[StudyID] [int] NOT NULL,
+	[Treatment] [nchar](1) NOT NULL,
+	[Available] [nchar](1) NOT NULL,
+  CONSTRAINT RandomCode UNIQUE(RandomCode),
+ CONSTRAINT [PK_TRandomCodes] PRIMARY KEY CLUSTERED 
+(
+	[RandomCodeID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+/****Create TRandomCodes FK to TStudies , which random treatment is at which study ****/
+ALTER TABLE [dbo].[TRandomCodes]  WITH CHECK ADD  CONSTRAINT [FK_TRandomCodes_TStudies] FOREIGN KEY([StudyID])
+REFERENCES [dbo].[TStudies] ([StudyID])
+GO
+
+ALTER TABLE [dbo].[TRandomCodes] CHECK CONSTRAINT [FK_TRandomCodes_TStudies]
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'What random code is associated to which Study' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TRandomCodes', @level2type=N'CONSTRAINT',@level2name=N'FK_TRandomCodes_TStudies'
+GO
+
+/****Create TPatients Table ****/
+CREATE TABLE [dbo].[TPatients](
+	[PatientID] [int] IDENTITY(1,1) NOT NULL,
+	[PatientNumber] [int] NOT NULL,
+	[SiteID] [int] NOT NULL,
+	[DOB] [datetime] NOT NULL,
+	[GenderID] [int] NOT NULL,
+	[Weight] [int] NOT NULL,
+	[RandomCodeID] [int] NULL,
+  CONSTRAINT PatientNumber UNIQUE(PatientNumber),
+ CONSTRAINT [PK_TPatients] PRIMARY KEY CLUSTERED 
+(
+	[PatientID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+/****Create TPatient FK to TGender, which gender is the patient ****/
+
+ALTER TABLE [dbo].[TPatients]  WITH CHECK ADD  CONSTRAINT [FK_TPatients_TGenders] FOREIGN KEY([GenderID])
+REFERENCES [dbo].[TGenders] ([GenderID])
+GO
+
+ALTER TABLE [dbo].[TPatients] CHECK CONSTRAINT [FK_TPatients_TGenders]
+GO
+
+/****Create TPatient FK to TRandomCodes, which patient gets which treatment ****/
+ALTER TABLE [dbo].[TPatients]  WITH CHECK ADD  CONSTRAINT [FK_TPatients_TRandomCodes] FOREIGN KEY([RandomCodeID])
+REFERENCES [dbo].[TRandomCodes] ([RandomCodeID])
+GO
+
+ALTER TABLE [dbo].[TPatients] CHECK CONSTRAINT [FK_TPatients_TRandomCodes]
+GO
+
+/****Create TPatient FK to TSites, patient is at which site ****/
+
+ALTER TABLE [dbo].[TPatients]  WITH CHECK ADD  CONSTRAINT [FK_TPatients_TSites] FOREIGN KEY([SiteID])
+REFERENCES [dbo].[TSites] ([SiteID])
+GO
+
+ALTER TABLE [dbo].[TPatients] CHECK CONSTRAINT [FK_TPatients_TSites]
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Gender of patient' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TPatients', @level2type=N'CONSTRAINT',@level2name=N'FK_TPatients_TGenders'
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Patient is assigned which random code' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TPatients', @level2type=N'CONSTRAINT',@level2name=N'FK_TPatients_TRandomCodes'
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Patient is at which site location' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TPatients', @level2type=N'CONSTRAINT',@level2name=N'FK_TPatients_TSites'
+GO
+
+
+/****Create TVisits Table ****/
+CREATE TABLE [dbo].[TVisits](
+	[VisitID] [int] IDENTITY(1,1) NOT NULL,
+	[PatientID] [int] NOT NULL,
+	[Visit] [datetime] NOT NULL,
+	[VisitTypeID] [int] NOT NULL,
+	[WithdrawReasonID] [int] NULL,
+ CONSTRAINT [PK_TVisits] PRIMARY KEY CLUSTERED 
+(
+	[VisitID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+/****Create TVisits FK to TPatients ****/
+ALTER TABLE [dbo].[TVisits]  WITH CHECK ADD  CONSTRAINT [FK_TVisits_TPatients] FOREIGN KEY([PatientID])
+REFERENCES [dbo].[TPatients] ([PatientID])
+GO
+ALTER TABLE [dbo].[TVisits] CHECK CONSTRAINT [FK_TVisits_TPatients]
+GO
+
+/****Create TVisits FK to TVisitTypes ****/
+ALTER TABLE [dbo].[TVisits]  WITH CHECK ADD  CONSTRAINT [FK_TVisits_TVisitTypes] FOREIGN KEY([VisitTypeID])
+REFERENCES [dbo].[TVisitTypes] ([VisitTypeID])
+GO
+ALTER TABLE [dbo].[TVisits] CHECK CONSTRAINT [FK_TVisits_TVisitTypes]
+GO
+
+/****Create TVisits FK to TWithdrawReasons****/
+
+ALTER TABLE [dbo].[TVisits]  WITH CHECK ADD  CONSTRAINT [FK_TVisits_TWithdrawReasons] FOREIGN KEY([WithdrawReasonID])
+REFERENCES [dbo].[TWithdrawReasons] ([WithdrawReasonID])
+GO
+
+ALTER TABLE [dbo].[TVisits] CHECK CONSTRAINT [FK_TVisits_TWithdrawReasons]
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'The visit is for this patient' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TVisits', @level2type=N'CONSTRAINT',@level2name=N'FK_TVisits_TPatients'
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'what the visit was for' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TVisits', @level2type=N'CONSTRAINT',@level2name=N'FK_TVisits_TVisitTypes'
+GO
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Record if patient was withdrawn from study & why' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TVisits', @level2type=N'CONSTRAINT',@level2name=N'FK_TVisits_TWithdrawReasons'
+GO
+
+
+/****Create TDrugKits Table ****/
+
+CREATE TABLE [dbo].[TDrugKits](
+	[DrugKitID] [int] IDENTITY(1,1) NOT NULL,
+	[DrugKitNumber] [int] NOT NULL,
+	[SiteID] [int] NOT NULL,
+	[Treatment] [nchar](1) NOT NULL,
+	[VisitID] [int] NULL,
+  CONSTRAINT DrugKitNumber UNIQUE(DrugKitNumber),
+ CONSTRAINT [PK_TDrugKits] PRIMARY KEY CLUSTERED 
+(
+	[DrugKitID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+/****Create TDrugKits FK to TSites ****/
+ALTER TABLE [dbo].[TDrugKits]  WITH CHECK ADD  CONSTRAINT [FK_TDrugKits_TSites] FOREIGN KEY([SiteID])
+REFERENCES [dbo].[TSites] ([SiteID])
+GO
+
+ALTER TABLE [dbo].[TDrugKits] CHECK CONSTRAINT [FK_TDrugKits_TSites]
+GO
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'DrugKit went to which site' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TDrugKits', @level2type=N'CONSTRAINT',@level2name=N'FK_TDrugKits_TSites'
+GO
+
+/****Create TDrugKits FK to TVisits ****/
+ALTER TABLE [dbo].[TDrugKits]  WITH CHECK ADD  CONSTRAINT [FK_TDrugKits_TVisits] FOREIGN KEY([VisitID])
+REFERENCES [dbo].[TVisits] ([VisitID])
+GO
+
+ALTER TABLE [dbo].[TDrugKits] CHECK CONSTRAINT [FK_TDrugKits_TVisits]
+GO
+
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'Drugkit was administered on this visit' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'TDrugKits', @level2type=N'CONSTRAINT',@level2name=N'FK_TDrugKits_TVisits'
+GO
+
+
+/*****Create Views Steps 2 -7 ******/
+
+/*****View #2 Both Active and Non-Active (Withdrawn) Patients******/
+CREATE VIEW All_Patients_1 AS
+select p.PatientID, p.PatientNumber, p.SiteID, st.StudyID, st.StudyDesc
+from TPatients p, TSites s, TStudies st
+where p.SiteID = s.SiteID
+and s.StudyID = st.StudyID
+GO
+
+/*****View #2 Active Patients ONLY******/
+CREATE VIEW All_Patients_2 AS
+select All_Patients.PatientID
+, All_Patients.PatientNumber
+, All_Patients.SiteID
+, All_Patients.StudyID
+, All_Patients.StudyDesc
+from 
+(select p.PatientID, p.PatientNumber, p.SiteID, st.StudyID, st.StudyDesc
+from TPatients p, TSites s, TStudies st
+where p.SiteID = s.SiteID
+and s.StudyID = st.StudyID) as All_Patients
+left join (select v.patientID, v.WithdrawReasonID
+from TVisits v 
+where VisitTypeID = 3) as WithDrawn_Patients
+on All_Patients.PatientID = Withdrawn_Patients.PatientID
+where Withdrawn_Patients.PatientID is null 
+GO
+
+/*****View #3 Both Active and Non-Active (Withdrawn) Patients******/
+CREATE VIEW Randomized_Patients_1 AS
+select p.PatientID, p.PatientNumber, p.SiteID, rc.Treatment, st.StudyID, st.StudyDesc
+from TPatients p, TRandomCodes rc, TSites s, TStudies st
+where p.RandomCodeID is not null 
+and p.RandomCodeID = rc.RandomCodeID
+and p.siteID = s.SiteID
+and s.StudyID = st.StudyID
+GO
+
+/*****View #3 Active Patients ONLY******/
+CREATE VIEW Randomized_Patients_2 AS
+select All_Patients.PatientID
+, All_Patients.PatientNumber
+, All_Patients.SiteID
+, All_Patients.StudyID
+, All_Patients.StudyDesc
+,All_Patients.Treatment
+from 
+(select p.PatientID, p.PatientNumber, p.SiteID, rc.Treatment, st.StudyID, st.StudyDesc
+from TPatients p, TRandomCodes rc, TSites s, TStudies st
+where p.RandomCodeID is not null 
+and p.RandomCodeID = rc.RandomCodeID
+and p.siteID = s.SiteID
+and s.StudyID = st.StudyID) as All_Patients
+left join (select v.patientID, v.WithdrawReasonID
+from TVisits v 
+where VisitTypeID = 3) as WithDrawn_Patients
+on All_Patients.PatientID = Withdrawn_Patients.PatientID
+where Withdrawn_Patients.PatientID is null 
+GO
+
+/*****View #4 Study 1******/
+CREATE VIEW Next_Avail_RandomCode_Study1 AS
+select min(randomcodeid) as 'Next Available RandomCodeID', min(randomcode) as 'Next Available RandomCode'
+from TRandomCodes
+where StudyID = 1
+and Available <> 'F'
+GO
+
+/*****View #4 Study 2******/
+CREATE VIEW Next_Avail_RandomCode_Study2 AS
+select min(randomcodeid) as 'Next Available RandomCodeID', min(randomcode) as 'Next Available RandomCode', Treatment
+from TRandomCodes
+where StudyID = 2
+and Available <> 'F'
+group by Treatment
+GO
+
+
+/*****View #5******/
+CREATE VIEW Available_Drugkits_5 AS
+select d.drugkitID, d.DrugKitNumber, d.Treatment, st.SiteID, s.studyID
+from TSites st, TStudies s, TDrugKits d
+where st.StudyID = s.StudyID
+and d.SiteID = st.SiteID
+and d.VisitID is null 
+GO
+
+/*****View #6******/
+CREATE VIEW Withdrawn_Patients_6 AS
+select st.StudyDesc
+, p.PatientID
+, p.PatientNumber
+, CONVERT(DATE, v.Visit) as 'Withdrawal Date'
+, s.SiteID
+, wr.WithdrawDesc
+from TPatients p, TVisits v, TWithdrawReasons wr,  TSites s, TStudies st
+where v.PatientID = p.PatientID
+and v.WithdrawReasonID = wr.WithdrawReasonID
+and p.SiteID = s.SiteID
+and s.StudyID = st.StudyID
+GO
+
+/*****View #7******/
+CREATE VIEW DrugKit_Supply_7 AS
+select dk.DrugKitNumber, dk.SiteID, st.StudyID
+from TDrugKits dk, TSites s, TStudies st
+where dk.VisitID is null 
+and s.StudyID = st.StudyID
+GO
+
+/***** TSTUDIES insert *****/
+INSERT INTO TSTUDIES VALUES('Study 12345')
+INSERT INTO TSTUDIES VALUES('Study 54321')
+
+/***** TStates insert*****/
+INSERT INTO TStates VALUES('Ohio')
+INSERT INTO TStates VALUES('Kentucky')
+INSERT INTO TStates VALUES('Indiana')
+INSERT INTO TStates VALUES('New Jersey')
+INSERT INTO TStates VALUES('Virginia')
+INSERT INTO TStates VALUES('Georgia')
+INSERT INTO TStates VALUES('Iowa')
+
+/***** TVISITTYPES insert*****/
+INSERT INTO TVisitTypes VALUES('Screening')
+INSERT INTO TVisitTypes VALUES('Randomization')
+INSERT INTO TVisitTypes VALUES('Withdrawal')
+
+/***** TWithdrawReasons insert*****/
+INSERT INTO TWithdrawReasons VALUES('Patient withdrew consent')
+INSERT INTO TWithdrawReasons VALUES('Adverse event')
+INSERT INTO TWithdrawReasons VALUES('Health issue-related to study')
+INSERT INTO TWithdrawReasons VALUES('Health issue-unrelated to study')
+INSERT INTO TWithdrawReasons VALUES('Personal reason')
+INSERT INTO TWithdrawReasons VALUES('Completed the study')
+
+/***** TGenders insert *****/
+INSERT INTO TGenders VALUES('1','Female')
+INSERT INTO TGenders VALUES('2','Male')
+
+/***** Validation of Base Tables
+select * from TStudies;
+select * from TStates;
+select * from TVisitTypes
+select * from TWithdrawReasons;
+select * from TGenders *****/
+/***** TSites insert *****/
+INSERT INTO TSites VALUES(101,1, 'Dr. Stan Heinrich ','123 E. Main St','Atlanta',6,'25869','1234567890')
+INSERT INTO TSites VALUES(111,1, 'Mercy Hospital','3456 Elmhurst Rd.','Secaucus',4,'32659','5013629564')
+INSERT INTO TSites VALUES(121,1, 'St. Elizabeth Hospital','976 Jackson Way','Ft. Thomas',2,'41258','3026521478')
+INSERT INTO TSites VALUES(501,2, 'Dr. Robert Adler','9087 W. Maple Ave.','Cedar Rapids',7,'42365','6149652574')
+INSERT INTO TSites VALUES(511,2, 'Dr. Tim Schmitz','4539 Helena Run','Mason',1,'45040','5136987462')
+INSERT INTO TSites VALUES(521,2, 'Dr. Lawrence Snell','9201 NW. Washington Blvd.','Bristol',5,'20163','3876510249')
+
+/***** TDrugKits Insert *****/
+INSERT INTO TDrugKits VALUES(10000,1, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10001,1, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10002,1, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10003,1, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10004,1, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10005,1, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10006,2, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10007,2, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10008,2, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10009,2, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10010,2, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10011,2, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10012,3, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10013,3, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10014,3, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10015,3, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10016,3, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10017,3, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10018,4, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10019,4, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10020,4, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10021,4, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10022,4, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10023,4, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10024,5, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10025,5, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10026,5, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10027,5, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10028,5, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10029,5, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10030,6, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10031,6, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10032,6, 'A', NULL)
+INSERT INTO TDrugKits VALUES(10033,6, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10034,6, 'P', NULL)
+INSERT INTO TDrugKits VALUES(10035,6, 'P', NULL)
+
+/***** TRandomCodes Insert *****/
+INSERT INTO TRandomCodes VALUES(1000,1, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(1001,1, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(1002,1, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(1003,1, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(1004,1, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(1005,1, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(1006,1, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(1007,1, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(1008,1, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(1009,1, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(1010,1, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(1011,1, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(1012,1, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(1013,1, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(1014,1, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(1015,1, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(1016,1, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(1017,1, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(1018,1, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(1019,1, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(5000,2, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(5001,2, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(5002,2, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(5003,2, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(5004,2, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(5005,2, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(5006,2, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(5007,2, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(5008,2, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(5009,2, 'A',  'T')
+INSERT INTO TRandomCodes VALUES(5010,2, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(5011,2, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(5012,2, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(5013,2, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(5014,2, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(5015,2, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(5016,2, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(5017,2, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(5018,2, 'P',  'T')
+INSERT INTO TRandomCodes VALUES(5019,2, 'P',  'T')
+
+
